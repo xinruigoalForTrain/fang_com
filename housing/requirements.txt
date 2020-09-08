@@ -1,0 +1,12 @@
+scrapy
+requests
+re
+time
+pyquery
+random
+twisted
+fake_useragent
+logging
+scrapy_redis
+MySQLdb
+
