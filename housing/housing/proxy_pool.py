@@ -31,7 +31,7 @@ class Proxy_pool():
         proxy_output = None
         if len(self.proxy_list) == 0:
             try:
-                self.get_proxy_from_zm('http://webapi.http.zhimacangku.com/getip?num=25&type=2&pro=0&city=0&yys=0&port=1&pack=116338&ts=1&ys=1&cs=1&lb=1&sb=0&pb=45&mr=2&regions=')     # 初始状态下一次取一定数量的IP
+                self.get_proxy_from_zm('http://webapi.http.zhimacangku.com/getip?num=20&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=0&lb=1&sb=0&pb=45&mr=2&regions=')     # 初始状态下一次取一定数量的IP
                 # time.sleep(4.45)
             except Exception as ex:
                 self.get_proxy_from_89(header,5)
@@ -68,7 +68,7 @@ class Proxy_pool():
         print(f"{invalid_proxy} removed")
         try:
             self.get_proxy_from_zm(
-                'http://webapi.http.zhimacangku.com/getip?num=1&type=2&pro=0&city=0&yys=0&port=1&pack=116338&ts=1&ys=1&cs=1&lb=1&sb=0&pb=45&mr=2&regions=')  # 调用API补充进一个代理
+                'http://webapi.http.zhimacangku.com/getip?num=1&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=0&lb=1&sb=0&pb=45&mr=2&regions=')  # 调用API补充进一个代理
         except Exception as e:
             self.get_proxy_from_89(header, 5)     # 如果API失效将暂时从89ip中补充
 

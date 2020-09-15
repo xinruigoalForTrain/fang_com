@@ -13,7 +13,7 @@ import items
 
 class HousingPipeline:
     def __init__(self):
-        self.connection =db.connect(host="127.0.0.1",user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
+        self.connection = db.connect(host="10.12.217.9",user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
         self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):     # 注意查看item的类别

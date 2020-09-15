@@ -74,3 +74,10 @@ subtitle/
 
 # log
 *.log
+
+# Docker
+Dockerfile
+
+*.pyc
+
+/pkg_require
