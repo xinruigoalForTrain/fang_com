@@ -1,4 +1,5 @@
 from scrapy import Spider,Request
+from scrapy.utils.project import get_project_settings
 from redis import Redis
 from ..items import HousingItem
 from ..items import DepartmentItem
@@ -7,24 +8,35 @@ import re
 import time
 from scrapy_redis.spiders import RedisSpider
 import logging
+import socket
 
 class HoudsingSpider(RedisSpider):
     name = 'fang_spider'
     # allowed_domains = ['fang.com']
 
     def __init__(self):
-        self.redis = Redis(host='127.0.0.1',port='6379')
+        port = '6379'
+        hostname = socket.gethostname()
+        host_info = socket.gethostbyname(hostname)
+        if host_info.startswith('172'):
+            port = '6380'
+        settings_map = get_project_settings()
+        redis_url = settings_map.get('REDIS_URL')
+        host = re.search(r'(\d+.){3}\d+',redis_url).group()
+        self.redis = Redis(host=host,port=port)
         self.base_url = 'https://{city}.newhouse.fang.com{suffix}'
 
     def start_requests(self):
-        city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
+        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
         # city_list = ['qiannan', 'yingtan','baise']
         # city_list = ['guilin','yc','bd']
-        # city_list = ['rugao','lvliang']
-        # index_url_list = []
+        city_list = ['yichun','yingtan']
+        index_url_list = []
         for city in city_list:
             index_url = self.base_url.format(city=city,suffix='/house/s/')
+            print(f"keys in redis:{self.redis.keys('*')},index)url is:{index_url}")
             self.redis.sadd('fang_spider:start_urls',index_url)
+            print(f"add urls:{self.redis.smembers('fang_spider:start_urls')}")
             yield Request(index_url, callback=self.parse_district, method='GET',meta={'city':city})
         logging.info(f"********************all start_urls in Redis:{self.redis.smembers('fang_spider:start_urls')}")
         # redis_key = 'room_spider:start_urls'

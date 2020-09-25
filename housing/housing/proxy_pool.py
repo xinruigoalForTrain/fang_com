@@ -6,10 +6,14 @@ import random
 
 class Proxy_pool():
     def __init__(self):
+        proxy_cnf = open(r'../housing/proxy_api.txt','r',encoding='utf-8')
+        api_list = proxy_cnf.readlines()
+        self.API_FIRST = api_list[0]
+        self.API_NEXT = api_list[1]
         self.proxy_list = []
         self.proxy_time_map = {}
         self.proxy_banned_time = {}
-        proxy_output = ""
+        proxy_cnf.close()
 
     def output_proxy(self,url_used,header):
         proxy_output = None
@@ -31,7 +35,7 @@ class Proxy_pool():
         proxy_output = None
         if len(self.proxy_list) == 0:
             try:
-                self.get_proxy_from_zm('http://webapi.http.zhimacangku.com/getip?num=20&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=0&lb=1&sb=0&pb=45&mr=2&regions=')     # 初始状态下一次取一定数量的IP
+                self.get_proxy_from_zm(self.API_FIRST)     # 初始状态下一次取一定数量的IP
                 # time.sleep(4.45)
             except Exception as ex:
                 self.get_proxy_from_89(header,5)
@@ -67,8 +71,7 @@ class Proxy_pool():
         self.proxy_list.remove(invalid_proxy)  # 如果当前时间大于代理过期时间，将此代理删除
         print(f"{invalid_proxy} removed")
         try:
-            self.get_proxy_from_zm(
-                'http://webapi.http.zhimacangku.com/getip?num=1&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=0&lb=1&sb=0&pb=45&mr=2&regions=')  # 调用API补充进一个代理
+            self.get_proxy_from_zm(self.API_NEXT)  # 调用API补充进一个代理
         except Exception as e:
             self.get_proxy_from_89(header, 5)     # 如果API失效将暂时从89ip中补充
 

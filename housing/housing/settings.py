@@ -110,7 +110,7 @@ LOG_FILE = './housing_crawl_tmp.log'
 # Enables scheduling storing requests queue in redis.
 SCHEDULER = 'scrapy_redis.scheduler.Scheduler'
 
-REDIS_URL = 'redis://localhost:6379'
+REDIS_URL = 'redis://10.12.217.9:6380'
 
 # Ensure all spiders share same duplicates filter through redis.
 DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'

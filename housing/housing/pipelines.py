@@ -9,11 +9,23 @@ from itemadapter import ItemAdapter
 import MySQLdb as db
 import time
 import items
-
+import socket
+from scrapy.utils.project import get_project_settings
+import re
 
 class HousingPipeline:
     def __init__(self):
-        self.connection = db.connect(host="10.12.217.9",user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
+        port = 3306
+        hostname = socket.gethostname()
+        host_info = socket.gethostbyname(hostname)
+        if host_info.startswith('172'):
+            port = 3309
+        settings_map = get_project_settings()
+        redis_url = settings_map.get('REDIS_URL')
+        host = re.search(r'(\d+.){3}\d+',redis_url).group()
+        self.connection = db.connect(host=host,port=port,user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
+        print('mysql initial done')
+        # self.connection = db.connect(host="10.12.217.9",user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
         self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):     # 注意查看item的类别

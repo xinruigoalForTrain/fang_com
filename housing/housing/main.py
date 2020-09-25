@@ -6,6 +6,8 @@ import requests
 import re
 from pyquery import PyQuery as pq
 import time
+import socket
+import MySQLdb as db
 
 def spider_test(url):
     header = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'}
@@ -107,8 +109,13 @@ def proxy_test(proxy_api):
         print(f"{proxy['ip']}:{proxy['port']},过期时间：{proxy['expire_time']}")
 
 if __name__ == '__main__':
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    execute(['scrapy','crawl','fang_spider'])
+    # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    # execute(['scrapy','crawl','fang_spider'])
+    # proxy_cnf = open(r'../housing/proxy_api.txt', 'r', encoding='utf-8')
+    # api_list = proxy_cnf.readlines()
+    # API_FIRST = api_list[0]
+    # API_NEXT = api_list[1]
+    # print(f"API_first:{API_FIRST},api_next{API_NEXT}")
     # spider_test('https://weilansiji.fang.com/house/2820145028/housedetail.htm')
     # collect_room_model_data('https://mzhdyjbd.fang.com/house/ajaxrequest/householdlist_get.php?newcode=2816118140&count=false&room=all&city=%E6%A2%85%E5%B7%9E')
     # recover_domain('https://jinganlangc.fang.com/')
@@ -127,6 +134,19 @@ if __name__ == '__main__':
     #                       'https://ygsahtwhcyy.fang.com/house/3420060818/housedetail.htm']
     # check_department_untouch(untouch_department)
     # proxy_test('http://api.wandoudl.com/api/ip?app_key=838158bebe091897d592f9768a452a6a&pack=0&num=5&xy=2&type=2&lb=\r\n&mr=2&')
+    # host_name = socket.gethostname()
+    # addr = socket.gethostbyname_ex(host_name)
+    # container_mysql_ip = addr[2][1]
+    connection = db.connect(host="10.12.217.9",port=3309,user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
+    cursor = connection.cursor()
+    sql = 'select city,count(1) from department group by city'
+    # sql = 'show tables;'
+    res = cursor.execute(sql)
+    data_row = cursor.fetchall()
+    for data in data_row:
+        print(f"output:{data}")
+    cursor.close()
+    connection.close()
 
 
 
