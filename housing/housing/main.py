@@ -109,8 +109,8 @@ def proxy_test(proxy_api):
         print(f"{proxy['ip']}:{proxy['port']},过期时间：{proxy['expire_time']}")
 
 if __name__ == '__main__':
-    # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    # execute(['scrapy','crawl','fang_spider'])
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    execute(['scrapy','crawl','fang_spider'])
     # proxy_cnf = open(r'../housing/proxy_api.txt', 'r', encoding='utf-8')
     # api_list = proxy_cnf.readlines()
     # API_FIRST = api_list[0]
@@ -137,16 +137,16 @@ if __name__ == '__main__':
     # host_name = socket.gethostname()
     # addr = socket.gethostbyname_ex(host_name)
     # container_mysql_ip = addr[2][1]
-    connection = db.connect(host="10.12.217.9",port=3309,user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
-    cursor = connection.cursor()
-    sql = 'select city,count(1) from department group by city'
-    # sql = 'show tables;'
-    res = cursor.execute(sql)
-    data_row = cursor.fetchall()
-    for data in data_row:
-        print(f"output:{data}")
-    cursor.close()
-    connection.close()
+    # connection = db.connect(host="10.12.217.9",port=3309,user='root',passwd='XinRuiGOAL!895',db='crawl_learning',charset='utf8')
+    # cursor = connection.cursor()
+    # sql = 'select city,count(1) from department group by city'
+    # # sql = 'show tables;'
+    # res = cursor.execute(sql)
+    # data_row = cursor.fetchall()
+    # for data in data_row:
+    #     print(f"output:{data}")
+    # cursor.close()
+    # connection.close()
 
 
 

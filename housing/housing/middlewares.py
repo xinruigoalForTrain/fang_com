@@ -109,7 +109,20 @@ class HousingDownloaderMiddleware:
     def process_response(self, request, response, spider):
         resp_code = response.status
         if resp_code > 300:
-            logging.error(f"{request.url} crawl failed,try it again")
+            print(f"{request.url} crawl failed directly,try it again,status code is {resp_code}")
+            header_dict = {'user_agent':str(request.headers['User-Agent'], encoding='utf-8')}
+            new_proxy = self.proxy_util.output_proxy_from_zm(request.url, header_dict)
+            # new_proxy = self.proxy_util.output_proxy_from_zm(request.url, request.headers['User-Agent'])
+            print(f"invalid proxy is {request.meta['proxy']},new_proxy is {new_proxy}")
+            request.meta['proxy'] = new_proxy
+            try:
+                print(f'request meta contain these items:{request.meta.keys()},type is {type(request.meta.keys()[0])}')
+                print(f'request header contain these items:{request.headers.keys()},type is {type(request.meta.keys()[0])}')
+                if 'Cookie'.encode(encoding='utf-8') in request.meta.keys():
+                    print("clear Cookie")
+                    del request.meta['Cookie']
+            except SyntaxError:
+                print('error here,do nothing about it')
             return request
         return response
 
@@ -117,6 +130,18 @@ class HousingDownloaderMiddleware:
         if isinstance(exception,self.ALL_EXCEPTIONS):
             print(f"{request.url} download fail,cause:{exception},change the header and proxy then try it again later")
             time.sleep(4.45)
+            header_dict = {'user_agent': str(request.headers['User-Agent'], encoding='utf-8')}
+            new_proxy = self.proxy_util.output_proxy_from_zm(request.url, header_dict)
+            print(f"invalid proxy is {request.meta['proxy']},new_proxy is {new_proxy}")
+            request.meta['proxy'] = new_proxy
+            try:
+                print(f'request meta contain these items:{request.meta.keys()},type is {type(request.meta.keys()[0])}')
+                print(f'request header contain these items:{request.headers.keys()},type is {type(request.meta.keys()[0])}')
+                if 'Cookie'.encode(encoding='utf-8') in request.headers.keys():
+                    print("clear Cookie")
+                    del request.headers['Cookie']
+            except SyntaxError:
+                print('error here,do nothing about it')
             return request
         else:
             logging.error(f"other exception {exception}")

@@ -26,15 +26,16 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 4.45
+RANDOMIZE_DOWNLOAD_DELAY = True
 
-DOWNLOAD_TIMEOUT = 25
+# DOWNLOAD_TIMEOUT = 25     # 超时设置，不一定都有正向效果
 
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
-#CONCURRENT_REQUESTS_PER_IP = 16
+CONCURRENT_REQUESTS_PER_IP = 3
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -110,7 +111,7 @@ LOG_FILE = './housing_crawl_tmp.log'
 # Enables scheduling storing requests queue in redis.
 SCHEDULER = 'scrapy_redis.scheduler.Scheduler'
 
-REDIS_URL = 'redis://10.12.217.9:6380'
+REDIS_URL = 'redis://10.12.217.9:6379'
 
 # Ensure all spiders share same duplicates filter through redis.
 DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'

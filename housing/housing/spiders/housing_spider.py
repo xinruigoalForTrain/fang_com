@@ -27,17 +27,16 @@ class HoudsingSpider(RedisSpider):
         self.base_url = 'https://{city}.newhouse.fang.com{suffix}'
 
     def start_requests(self):
-        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
-        # city_list = ['qiannan', 'yingtan','baise']
-        # city_list = ['guilin','yc','bd']
-        city_list = ['yichun','yingtan']
+        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb'
+        city_list = ['deyang','liuzhou']
+        # city_list = ['sanming','guilin']
         index_url_list = []
         for city in city_list:
             index_url = self.base_url.format(city=city,suffix='/house/s/')
             print(f"keys in redis:{self.redis.keys('*')},index)url is:{index_url}")
             self.redis.sadd('fang_spider:start_urls',index_url)
             print(f"add urls:{self.redis.smembers('fang_spider:start_urls')}")
-            yield Request(index_url, callback=self.parse_district, method='GET',meta={'city':city})
+            yield Request(index_url,callback=self.parse_district,method='GET',meta={'city':city})
         logging.info(f"********************all start_urls in Redis:{self.redis.smembers('fang_spider:start_urls')}")
         # redis_key = 'room_spider:start_urls'
 

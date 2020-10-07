@@ -100,7 +100,7 @@ class Proxy_pool():
         resp = requests.get(api)
         result = resp.json()
         if resp.status_code != 200 or (not result['success']):
-            raise Exception('代理API已失效！程序将进入休眠，请尽快处理！')
+            raise Exception(f'代理API已失效！程序将进入休眠，请尽快处理！msg：{result}')
             # time.sleep(5555)     #中断爬取，待IP充值后恢复（未完成）
         else:
             resp_json = resp.json()
