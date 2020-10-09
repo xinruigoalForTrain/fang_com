@@ -111,6 +111,8 @@ def proxy_test(proxy_api):
 if __name__ == '__main__':
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     execute(['scrapy','crawl','fang_spider'])
+    if input() == 'P' or input() == '':
+        execute(['scrapy','crawl','fang_spider','-s','JOBDIR=../../ang_com/crawl_job'])
     # proxy_cnf = open(r'../housing/proxy_api.txt', 'r', encoding='utf-8')
     # api_list = proxy_cnf.readlines()
     # API_FIRST = api_list[0]

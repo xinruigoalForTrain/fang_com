@@ -32,7 +32,7 @@ RANDOMIZE_DOWNLOAD_DELAY = True
 
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
-CONCURRENT_REQUESTS_PER_IP = 3
+CONCURRENT_REQUESTS_PER_IP = 8
 
 # Disable cookies (enabled by default)
 COOKIES_ENABLED = False
@@ -111,7 +111,7 @@ LOG_FILE = './housing_crawl_tmp.log'
 # Enables scheduling storing requests queue in redis.
 SCHEDULER = 'scrapy_redis.scheduler.Scheduler'
 
-REDIS_URL = 'redis://10.12.217.9:6379'
+REDIS_URL = 'redis://192.168.0.163:6379'
 
 # Ensure all spiders share same duplicates filter through redis.
 DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'

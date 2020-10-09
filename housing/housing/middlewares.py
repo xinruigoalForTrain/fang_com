@@ -77,8 +77,11 @@ class HousingDownloaderMiddleware:
     def __init__(self):
         self.ua = UserAgent()
         self.proxy_util = Proxy_pool()
-        logging.basicConfig(filename='housing_error.log',level=logging.ERROR)
+        self.request_writer = open('request_url_record.log','a+',encoding='utf-8')
+        logging.basicConfig(filename='housing_requests.log',level=logging.INFO)
 
+    def __del__(self):
+        self.request_writer.close()
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -90,7 +93,8 @@ class HousingDownloaderMiddleware:
     def process_request(self, request, spider):
         fake_ua = self.ua.random
         url = request.url
-        print(f"=====crawl url:{url}=====")
+        print(f"=====crawl url:{url} begin=====")
+        self.request_writer.write(f'=====crawl url:{url} begin=====\n')
         proxy_kind = url.split(":")[0]
         header_tmp = {'user_agent':fake_ua}
         # proxy = self.proxy_util.output_proxy(url,header_tmp)
@@ -124,6 +128,7 @@ class HousingDownloaderMiddleware:
             except SyntaxError:
                 print('error here,do nothing about it')
             return request
+        self.request_writer.write(f"=====crawl url:{request.url} done=====\n")
         return response
 
     def process_exception(self, request, exception, spider):

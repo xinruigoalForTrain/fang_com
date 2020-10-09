@@ -71,6 +71,7 @@ fabric.properties
 
 # work dictionary
 subtitle/
+crawl_job/
 
 # log
 *.log
