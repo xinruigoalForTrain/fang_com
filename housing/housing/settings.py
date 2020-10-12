@@ -60,9 +60,9 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-EXTENSIONS = {
-   'housing.extensions.RedisSpiderSmartIdleClosedExensions': 500,
-}
+# EXTENSIONS = {
+#    'housing.extensions.RedisSpiderSmartIdleClosedExensions': 500,     # 不知为何没起作用
+# }
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
@@ -92,10 +92,10 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-MYEXT_ENABLED = True
+# MYEXT_ENABLED = True
 
-# 配置空闲持续时间单位为 360个 ，一个时间单位为5s
-IDLE_NUMBER = 360
+# 配置空闲持续时间单位为 100个 ，一个时间单位为5s
+IDLE_NUMBER = 100
 
 # 使用的哈希函数数，默认为6
 BLOOMFILTER_HASH_NUMBER = 6

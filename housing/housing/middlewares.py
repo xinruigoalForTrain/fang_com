@@ -4,6 +4,7 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.exceptions import NotConfigured
 from fake_useragent import UserAgent
 from proxy_pool import Proxy_pool
 from twisted.internet import defer
@@ -11,7 +12,6 @@ from twisted.internet.error import TimeoutError,DNSLookupError,ConnectionRefused
 from twisted.web.client import ResponseFailed
 from scrapy.core.downloader.handlers.http11 import TunnelError
 import time
-import logging
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
@@ -74,21 +74,47 @@ class HousingDownloaderMiddleware:
                       IOError, TunnelError)
 
 
-    def __init__(self):
+    def __init__(self, idle_number, crawler):
         self.ua = UserAgent()
         self.proxy_util = Proxy_pool()
         self.request_writer = open('request_url_record.log','a+',encoding='utf-8')
-        logging.basicConfig(filename='housing_requests.log',level=logging.INFO)
-
-    def __del__(self):
-        self.request_writer.close()
+        self.crawler = crawler
+        self.idle_number = idle_number
+        self.idle_list = []
+        self.idle_count = 0
 
     @classmethod
     def from_crawler(cls, crawler):
         # This method is used by Scrapy to create your spiders.
-        s = cls()
-        crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
-        return s
+        # s = cls()
+        # crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
+        # return s
+        # if not crawler.settings.getbool('MYEXT_ENABLED'):
+        #     raise NotConfigured
+
+        # 配置仅仅支持RedisSpider
+        # if not 'redis_key' in crawler.spidercls.__dict__.keys():
+        #     raise NotConfigured('Only supports RedisSpider')
+
+        # get the number of items from settings
+
+        idle_number = crawler.settings.getint('IDLE_NUMBER', 100)
+
+        # instantiate the extension object
+
+        ext = cls(idle_number, crawler)
+
+        # connect the extension object to signals
+
+        crawler.signals.connect(ext.spider_opened, signal=signals.spider_opened)
+
+        crawler.signals.connect(ext.spider_closed, signal=signals.spider_closed)
+
+        crawler.signals.connect(ext.spider_idle, signal=signals.spider_idle)
+
+        # return the extension object
+
+        return ext
 
     def process_request(self, request, spider):
         fake_ua = self.ua.random
@@ -149,7 +175,7 @@ class HousingDownloaderMiddleware:
                 print('error here,do nothing about it')
             return request
         else:
-            logging.error(f"other exception {exception}")
+            spider.logger.info(f"other exception {exception}")
             return None
         # Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
@@ -158,7 +184,27 @@ class HousingDownloaderMiddleware:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
-        pass
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info(f"opened spider {spider.name} redis spider Idle, Continuous idle limit： {self.idle_number}")
+
+    def spider_closed(self, spider):
+        self.request_writer.close()
+        spider.logger.info(f"closed spider {spider.name},idle count {self.idle_count},Continuous idle count {len(self.idle_list)}")
+
+    def spider_idle(self, spider):
+        self.idle_count += 1
+        self.idle_list.append(time.time())
+        idle_list_len = len(self.idle_list)
+
+        # 判断 redis 中是否存在关键key, 如果key 被用完，则key就会不存在
+        if idle_list_len > 2 and spider.server.exists(spider.redis_key):
+            self.idle_list = [self.idle_list[-1]]
+
+        elif idle_list_len > self.idle_number:
+            spider.logger.info(f"""continued idle number exceed {self.idle_number} Times 
+                        meet the idle shutdown conditions, will close the reptile operation 
+                        idle start time: {self.idle_list[0]}, close spider time: {self.idle_list[0]}""")
+            # 执行关闭爬虫操作
+            self.crawler.engine.close_spider(spider, 'closespider_pagecount')
+

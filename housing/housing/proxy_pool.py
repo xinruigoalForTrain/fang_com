@@ -73,7 +73,7 @@ class Proxy_pool():
         try:
             self.get_proxy_from_zm(self.API_NEXT)  # 调用API补充进一个代理
         except Exception as e:
-            self.get_proxy_from_89(header, 5)     # 如果API失效将暂时从89ip中补充
+            self.get_proxy_from_89(header, 1)     # 如果API失效将暂时从89ip中补充
 
     def get_proxy_from_89(self, header, n):
         # headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0'}

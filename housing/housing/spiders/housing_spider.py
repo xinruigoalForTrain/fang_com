@@ -27,10 +27,11 @@ class HoudsingSpider(RedisSpider):
         self.base_url = 'https://{city}.newhouse.fang.com{suffix}'
 
     def start_requests(self):
-        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb'
+        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
         # city_list = ['yz','jining']
-        city_list = ['shangrao','chenzhou']
-        # city_list = ['mudanjiang','byne']
+        # city_list = ['shangrao','chenzhou']
+        # city_list = ['yaan','neijiang']
+        city_list = ['mudanjiang','byne']
         index_url_list = []
         for city in city_list:
             index_url = self.base_url.format(city=city,suffix='/house/s/')

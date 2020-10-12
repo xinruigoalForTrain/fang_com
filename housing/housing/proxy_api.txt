@@ -1,2 +1,2 @@
-http://http.tiqu.alicdns.com/getip3?num=9&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=1&regions=&gm=4
-http://http.tiqu.alicdns.com/getip3?num=1&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=1&regions=&gm=4
+http://http.tiqu.alicdns.com/getip3?num=9&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=2&regions=150000,220000,230000,360000,530000
+http://http.tiqu.alicdns.com/getip3?num=1&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=2&regions=150000,220000,230000,360000,530000
