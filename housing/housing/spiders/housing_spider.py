@@ -29,9 +29,9 @@ class HoudsingSpider(RedisSpider):
     def start_requests(self):
         # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
         # city_list = ['yz','jining']
-        # city_list = ['shangrao','chenzhou']
-        # city_list = ['yaan','neijiang']
-        city_list = ['mudanjiang','byne']
+        # city_list = ['qiannan','chenzhou']
+        # city_list = ['panjin','neijiang']
+        city_list = ['jiamusi','danzhou']
         index_url_list = []
         for city in city_list:
             index_url = self.base_url.format(city=city,suffix='/house/s/')
@@ -64,10 +64,20 @@ class HoudsingSpider(RedisSpider):
         page_str = response.text
         page_pq = pq(page_str)
         departments = page_pq('.nlc_img')
+        # 该区域没有房产信息，则不进入循环
         for department in departments.items():
             department_link = department('a').attr('href')
             department_url = "https:" + department_link
             yield Request(department_url,callback=self.parse_department_detail,method='GET',meta={'city':city,'district':district})
+        # 如果存在下一页，进行翻页爬取
+        page_bar = page_pq('.page')
+        if page_bar:
+            url_origin = response.request.url
+            page_bar_class = page_bar('a:last').attr('class')
+            if page_bar_class != 'active':     # 判断是否到达尾页
+                request_next_page_suffix = page_bar('.next').attr('href')
+                request_next_page_url = re.sub('(https://\S+.fang.com)\S+',fr'\1{request_next_page_suffix}',url_origin)
+                yield Request(request_next_page_url,callback=self.parse_department_list,method='GET',meta={'city':city,'district':district})
             # time.sleep(8.9)
 
     def parse_department_detail(self,response):
