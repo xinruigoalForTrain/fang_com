@@ -19,8 +19,14 @@ NEWSPIDER_MODULE = 'housing.spiders'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
 
+DOWNLOAD_FAIL_ON_DATALOSS = True
+
+RETRY_ENABLED = True
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
+
+DEPTH_PRIORITY = -1
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -111,12 +117,13 @@ LOG_FILE = './housing_crawl_tmp.log'
 # Enables scheduling storing requests queue in redis.
 SCHEDULER = 'scrapy_redis.scheduler.Scheduler'
 
-# REDIS_URL = 'redis://192.168.0.163:6379'
+REDIS_URL = 'redis://192.168.0.163:6379'
 # REDIS_URL = 'redis://192.168.1.115:6379'
-REDIS_URL = 'redis://10.12.222.208:6379'
+# REDIS_URL = 'redis://10.12.222.208:6379'
 
 # Ensure all spiders share same duplicates filter through redis.
 DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'
+
 
 SCHEDULER_PERSIST = True
 

@@ -28,10 +28,10 @@ class HoudsingSpider(RedisSpider):
 
     def start_requests(self):
         # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
-        # city_list = ['yz','jining']
+        city_list = ['xlglm','leiyang']
         # city_list = ['qiannan','chenzhou']
         # city_list = ['panjin','neijiang']
-        city_list = ['jiamusi','danzhou']
+        # city_list = ['jiamusi','danzhou']
         index_url_list = []
         for city in city_list:
             index_url = self.base_url.format(city=city,suffix='/house/s/')
@@ -190,3 +190,6 @@ class HoudsingSpider(RedisSpider):
                 housing_item['reference_price'] = 0.0
             housing_item['department_code'] = department_code
             yield housing_item
+
+    def parse(self, response):
+        print('Anything need to do after crawl job have done?')

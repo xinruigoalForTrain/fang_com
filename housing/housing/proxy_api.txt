@@ -1,2 +1,2 @@
-http://webapi.http.zhimacangku.com/getip?num=5&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=2&regions=110000,210000,340000,440000,510000
-http://webapi.http.zhimacangku.com/getip?num=1&type=2&pro=0&city=0&yys=0&port=11&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=2&regions=110000,210000,340000,440000,510000
+http://webapi.http.zhimacangku.com/getip?num=5&type=2&pro=0&city=0&yys=0&port=1&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=2&regions=110000,130000,320000,340000
+http://webapi.http.zhimacangku.com/getip?num=1&type=2&pro=0&city=0&yys=0&port=1&pack=115882&ts=1&ys=0&cs=1&lb=1&sb=0&pb=45&mr=2&regions=110000,130000,320000,340000
