@@ -77,7 +77,7 @@ class HousingDownloaderMiddleware:
     def __init__(self, idle_number, crawler):
         self.ua = UserAgent()
         self.proxy_util = Proxy_pool()
-        self.request_writer = open('request_url_record.log','a+',encoding='utf-8')
+        self.request_writer = open('request_url_record.txt','a+',encoding='utf-8')     # 需要提交到线上
         self.crawler = crawler
         self.idle_number = idle_number
         self.idle_list = []
@@ -122,11 +122,11 @@ class HousingDownloaderMiddleware:
         print(f"=====crawl url:{url} begin=====")
         self.request_writer.write(f'=====crawl url:{url} begin=====\n')
         proxy_kind = url.split(":")[0]
+        request.headers['User-Agent'] = fake_ua
         header_tmp = {'user_agent':fake_ua}
         # proxy = self.proxy_util.output_proxy(url,header_tmp)
         proxy = self.proxy_util.output_proxy_from_zm(url,header_tmp)
         # print(f"the proxy will be {proxy},kind of proxy is {proxy_kind}")
-        request.headers['User-Agent'] = fake_ua
         if proxy_kind == 'https':
             proxy_str = f"https://{proxy}"
         elif proxy_kind == 'http':

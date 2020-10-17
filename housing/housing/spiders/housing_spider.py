@@ -1,5 +1,6 @@
 from scrapy import Spider,Request
 from scrapy.utils.project import get_project_settings
+from scrapy.utils.request import request_fingerprint
 from redis import Redis
 from ..items import HousingItem
 from ..items import DepartmentItem
@@ -27,15 +28,20 @@ class HoudsingSpider(RedisSpider):
         self.base_url = 'https://{city}.newhouse.fang.com{suffix}'
 
     def start_requests(self):
-        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
-        city_list = ['xlglm','leiyang']
+        rest_url_dict = self.check_interrupt_requests()
+        for rest_url in rest_url_dict.keys():
+            self.redis.sadd('fang_spider:start_urls', rest_url)
+            callback_func = rest_url_dict[rest_url]
+            yield Request(rest_url, callback=callback_func, method='GET')
+        city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
+        # city_list = ['xlglm','leiyang']
         # city_list = ['qiannan','chenzhou']
-        # city_list = ['panjin','neijiang']
+        # city_list = []     # 调试用
         # city_list = ['jiamusi','danzhou']
         index_url_list = []
         for city in city_list:
             index_url = self.base_url.format(city=city,suffix='/house/s/')
-            print(f"keys in redis:{self.redis.keys('*')},index)url is:{index_url}")
+            print(f"keys in redis:{self.redis.keys('*')},index_url is:{index_url}")
             self.redis.sadd('fang_spider:start_urls',index_url)
             print(f"add urls:{self.redis.smembers('fang_spider:start_urls')}")
             yield Request(index_url,callback=self.parse_district,method='GET',meta={'city':city})
@@ -43,7 +49,12 @@ class HoudsingSpider(RedisSpider):
         # redis_key = 'room_spider:start_urls'
 
     def parse_district(self, response):
-        city = response.meta['city']
+        if 'city' in response.meta:
+            city = response.meta['city']
+        else:
+            url_city = response.request.url
+            pattern_city = 'https://(\w+).newhouse.fang.com/house/s/$'
+            city = re.search(pattern_city,url_city).group(1)
         page_str = response.text
         page_pq = pq(page_str)
         city_mark = page_pq('.tf.f12 a').eq(0).text()
@@ -59,8 +70,13 @@ class HoudsingSpider(RedisSpider):
             # time.sleep(4.45)
 
     def parse_department_list(self,response):
-        city = response.meta['city']
-        district = response.meta['district']
+        if ('city' in response.meta) and ('district' in response.meta):
+            city = response.meta['city']
+            district = response.meta['district']
+        else:
+            req = response.request.url
+            city = re.search('https://(\w+).newhouse.fang.com/house/s/(\w+)',req).group(1)
+            district = re.search('https://(\w+).newhouse.fang.com/house/s/(\w+)/(b\d+)*',req).group(2)
         page_str = response.text
         page_pq = pq(page_str)
         departments = page_pq('.nlc_img')
@@ -81,10 +97,16 @@ class HoudsingSpider(RedisSpider):
             # time.sleep(8.9)
 
     def parse_department_detail(self,response):
-        city = response.meta['city']
-        district = response.meta['district']
+        if ('city' in response.meta) and ('city' in response.meta):
+            city = response.meta['city']
+            district = response.meta['district']
+        else:
+            page_pq = pq(response.text)
+            navigates = page_pq('.br_left a')
+            city = re.search('(.*)新房', navigates[1].text).group(1)
+            district = re.search('(.*)楼盘', navigates[2].text).group(1)
         page_str = response.text
-        more_links = re.findall(r'<a .*?href=".*?".*?>更多详细信息&gt;&gt;</a>',page_str,re.M)     # 存在多种页面结构,使用正则得到楼盘详细信息(注:大于号需要转义)
+        more_links = re.findall(r'<a .*?href=".*?".*?>更多详细信息(&gt;)*</a>',page_str,re.M)     # 存在多种页面结构,使用正则得到楼盘详细信息(注:大于号需要转义)
         pq_a = pq(more_links[0])
         more_link = pq_a.attr('href')
         request_url = response.request.url
@@ -107,10 +129,15 @@ class HoudsingSpider(RedisSpider):
         #     more_url = 'https:' + more_link
 
     def parse_department_more(self, response):
-        city = response.meta['city']
-        district = response.meta['district']
         page_str = response.text
         page_pq = pq(page_str,parser='html')
+        if ('city' in response.meta) and ('district' in response.meta):
+            city = response.meta['city']
+            district = response.meta['district']
+        else:
+            navigates = page_pq('.topcrumbs a')
+            city = re.search('(.*)新房',navigates[1].text).group(1)
+            district = re.search('(.*)楼盘',navigates[2].text).group(1)
         department_item = DepartmentItem()
         department_item['obj'] = 'department'
         department_item['department_name'] = page_pq('h1 a').text().strip()
@@ -161,7 +188,11 @@ class HoudsingSpider(RedisSpider):
             # time.sleep(4.45)
 
     def save_room_model(self,response):     # 直接请求该楼盘的户型详情
-        department_code = response.meta['department_code']
+        if 'department_code' in response.meta:
+            department_code = response.meta['department_code']
+        else:
+            url_housing = response.request.url
+            department_code = re.match('https://(\w+).fang.com/house/ajaxrequest/householdlist_get.php\?newcode=(\d+)&\S+',url_housing).group(2)
         room_model_data = response.json()
         for data_row in room_model_data:
             housing_item = HousingItem()
@@ -190,6 +221,58 @@ class HoudsingSpider(RedisSpider):
                 housing_item['reference_price'] = 0.0
             housing_item['department_code'] = department_code
             yield housing_item
+
+    def check_interrupt_requests(self):
+        reader = open('request_url_record.txt','r+',encoding='UTF-8')
+        url_info = reader.readline()
+        url_dict = {}
+        while url_info:
+            match_res = re.match('^={5}crawl url:(https://\S+)\s(\w+)={5}$',url_info)
+            if not match_res:
+                print(f"warning!! :{url_info} break the format")
+            else:
+                url = match_res.group(1)
+                status = match_res.group(2)
+                if status == 'begin':
+                    url_dict[url] = status
+                elif status == 'done':
+                    url_dict.pop(url)
+            url_info = reader.readline()
+        print(f"{len(url_dict.keys())} urls have been interrupt last time,crawl them again")
+        pattern_city = 'https://(\w+).newhouse.fang.com/house/s/$'
+        pattern_district = 'https://(\w+).newhouse.fang.com/house/s/(\w+)/(b\d+)*'
+        pattern_page = 'https://(\w+).fang.com/$'
+        pattern_detail = 'https://(\w+).fang.com/house/(\d+)/housedetail.htm'
+        pattern_housing = 'https://(\w+).fang.com/house/ajaxrequest/householdlist_get.php\?newcode=(\d+)&\S+'
+        rest_url_dict = {}
+        for url in url_dict.keys():
+            # 根据request正则分类，分发给不同的回调函数，并在dupefilter中删除对应的指纹
+            if re.match(pattern_city,url):
+                callback_func = self.parse_district
+                # self.parse_district(resp)
+            elif re.match(pattern_district,url):
+                callback_func = self.parse_department_list
+                # self.parse_department_list(resp)
+            elif re.match(pattern_page,url):
+                callback_func = self.parse_department_detail
+                # self.parse_department_detail(resp)
+            elif re.match(pattern_detail,url):
+                callback_func = self.parse_department_more
+                # self.parse_department_more(resp)
+            elif re.match(pattern_housing,url):
+                callback_func = self.save_room_model
+                # self.save_room_model(resp)
+            else:
+                print(f"{url} does match any pattern,check whether it is valid.")
+                continue
+            rest_url_dict[url] = callback_func
+            fp = request_fingerprint(Request(url,callback=callback_func,method='GET'), include_headers=None)
+            self.redis.srem(HoudsingSpider.name+':dupefilter',fp)     # 如果dupefilter中不存在将会被忽略，不会报错
+            # 将文件中的链接处理完成后，立即清空文件，防止后面写入造成污染
+        reader.seek(0)     # 回到文件首部
+        reader.truncate()
+        reader.close()
+        return rest_url_dict
 
     def parse(self, response):
         print('Anything need to do after crawl job have done?')
