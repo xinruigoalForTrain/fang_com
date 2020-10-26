@@ -12,6 +12,7 @@ BOT_NAME = 'housing'
 SPIDER_MODULES = ['housing.spiders']
 NEWSPIDER_MODULE = 'housing.spiders'
 
+REDIRECT_ENABLED = False
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'housing (+http://www.yourdomain.com)'
@@ -112,14 +113,14 @@ BLOOMFILTER_BIT = 22
 
 # log config
 LOG_LEVEL = 'INFO'
-LOG_FILE = './housing_crawl_tmp.log'
+LOG_FILE = './housing_crawl.log'
 
 # Enables scheduling storing requests queue in redis.
 SCHEDULER = 'scrapy_redis.scheduler.Scheduler'
 
-# REDIS_URL = 'redis://192.168.0.163:6379'
+REDIS_URL = 'redis://192.168.0.163:6379'
 # REDIS_URL = 'redis://192.168.1.115:6379'
-REDIS_URL = 'redis://10.12.222.208:6379'
+# REDIS_URL = 'redis://10.12.222.208:6379'
 
 # Ensure all spiders share same duplicates filter through redis.
 DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'

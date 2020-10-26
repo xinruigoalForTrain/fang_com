@@ -12,6 +12,7 @@ from twisted.internet.error import TimeoutError,DNSLookupError,ConnectionRefused
 from twisted.web.client import ResponseFailed
 from scrapy.core.downloader.handlers.http11 import TunnelError
 import time
+import traceback
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
@@ -117,24 +118,32 @@ class HousingDownloaderMiddleware:
         return ext
 
     def process_request(self, request, spider):
-        fake_ua = self.ua.random
-        url = request.url
-        print(f"=====crawl url:{url} begin=====")
-        self.request_writer.write(f'=====crawl url:{url} begin=====\n')
-        proxy_kind = url.split(":")[0]
-        request.headers['User-Agent'] = fake_ua
-        header_tmp = {'user_agent':fake_ua}
-        # proxy = self.proxy_util.output_proxy(url,header_tmp)
-        proxy = self.proxy_util.output_proxy_from_zm(url,header_tmp)
-        # print(f"the proxy will be {proxy},kind of proxy is {proxy_kind}")
-        if proxy_kind == 'https':
-            proxy_str = f"https://{proxy}"
-        elif proxy_kind == 'http':
-            proxy_str = f"http://{proxy}"
+        try:
+            fake_ua = self.ua.random
+            url = request.url
+            print(f"=====crawl url:{url} begin=====")
+            self.request_writer.write(f'=====crawl url:{url} begin=====\n')
+            self.request_writer.flush()
+            proxy_kind = url.split(":")[0]
+            request.headers['User-Agent'] = fake_ua
+            header_tmp = {'user_agent':fake_ua}
+            # proxy = self.proxy_util.output_proxy(url,header_tmp)
+            proxy = self.proxy_util.output_proxy_from_zm(url,header_tmp)
+            print(f"the proxy will be {proxy},kind of proxy is {proxy_kind}")
+        except Exception as ex:
+            spider.logger.error(traceback.format_exc())
+            time.sleep(5)
+            self.request_writer.write(f'=====crawl url:{url} begin=====\n')
+            self.request_writer.flush()
+        # if proxy_kind == 'https':
+        #     proxy_str = f"https://{proxy}"
+        # elif proxy_kind == 'http':
+        #     proxy_str = f"http://{proxy}"
         request.meta['proxy'] = proxy
         if proxy is None:
             print("use your proxy")
             request.meta['proxy'] = None
+
 
     def process_response(self, request, response, spider):
         resp_code = response.status
@@ -146,8 +155,8 @@ class HousingDownloaderMiddleware:
             print(f"invalid proxy is {request.meta['proxy']},new_proxy is {new_proxy}")
             request.meta['proxy'] = new_proxy
             try:
-                print(f'request meta contain these items:{request.meta.keys()},type is {type(request.meta.keys()[0])}')
-                print(f'request header contain these items:{request.headers.keys()},type is {type(request.meta.keys()[0])}')
+                # print(f'request meta contain these items:{request.meta.keys()},type is {type(request.meta.keys()[0])}')
+                # print(f'request header contain these items:{request.headers.keys()},type is {type(request.meta.keys()[0])}')
                 if 'Cookie'.encode(encoding='utf-8') in request.meta.keys():
                     print("clear Cookie")
                     del request.meta['Cookie']
@@ -155,6 +164,7 @@ class HousingDownloaderMiddleware:
                 print('error here,do nothing about it')
             return request
         self.request_writer.write(f"=====crawl url:{request.url} done=====\n")
+        self.request_writer.flush()
         return response
 
     def process_exception(self, request, exception, spider):
@@ -166,8 +176,8 @@ class HousingDownloaderMiddleware:
             print(f"invalid proxy is {request.meta['proxy']},new_proxy is {new_proxy}")
             request.meta['proxy'] = new_proxy
             try:
-                print(f'request meta contain these items:{request.meta.keys()},type is {type(request.meta.keys()[0])}')
-                print(f'request header contain these items:{request.headers.keys()},type is {type(request.meta.keys()[0])}')
+                # print(f'request meta contain these items:{request.meta.keys()},type is {type(request.meta.keys()[0])}')
+                # print(f'request header contain these items:{request.headers.keys()},type is {type(request.meta.keys()[0])}')
                 if 'Cookie'.encode(encoding='utf-8') in request.headers.keys():
                     print("clear Cookie")
                     del request.headers['Cookie']
