@@ -38,7 +38,7 @@ class HoudsingSpider(RedisSpider):
         # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
         # city_list = ['xlglm','leiyang']
         # city_list = ['qiannan','chenzhou']
-        city_list = ['sjz','cz']     # 调试用
+        city_list = ['wz','changchun']     # 调试用
         # city_list = ['jiamusi','danzhou']
         index_url_list = []
         for city in city_list:
@@ -71,6 +71,7 @@ class HoudsingSpider(RedisSpider):
                 district_url = self.base_url.format(city=city,suffix=district_suffix)
                 yield Request(district_url,callback=self.parse_department_list,method='GET',meta={'city':city_name,'district':district})
         except Exception as ex:
+            logging.error(f"{response.request.url} parse_district have failed")
             logging.error(traceback.format_exc())
             self.record_error(response.request.url)
             # time.sleep(4.45)
@@ -101,6 +102,7 @@ class HoudsingSpider(RedisSpider):
                     request_next_page_url = re.sub('(https://\S+.fang.com)\S+',fr'\1{request_next_page_suffix}',url_origin)
                     yield Request(request_next_page_url,callback=self.parse_department_list,method='GET',meta={'city':city,'district':district})
         except Exception as ex:
+            logging.error(f"{response.request.url} parse_list have failed")
             logging.error(traceback.format_exc())
             self.record_error(response.request.url)
         # time.sleep(8.9)
@@ -116,7 +118,7 @@ class HoudsingSpider(RedisSpider):
                 city = re.search('(.*)新房', navigates[1].text).group(1)
                 district = re.search('(.*)楼盘', navigates[2].text).group(1)
             page_str = response.text
-            more_links = re.search(r'<a .*?href=".*?".*?>更多详细信息(&gt;){1,2}</a>',page_str,re.M)     # 存在多种页面结构,使用正则得到楼盘详细信息(注:大于号需要转义)
+            more_links = re.search(r'<a .*?href=".*?".*?>更多详细信息(&gt;|>){1,2}</a>',page_str,re.M)     # 存在多种页面结构,使用正则得到楼盘详细信息(注:大于号需要转义)
             pq_a = pq(more_links[0])
             more_link = pq_a.attr('href')
             request_url = response.request.url
@@ -127,6 +129,7 @@ class HoudsingSpider(RedisSpider):
                 more_url = 'https:' + more_link
             yield Request(more_url,callback=self.parse_department_more,method='GET',meta={'city':city,'district':district})
         except Exception as ex:
+            logging.error(f"{response.request.url} parse_detail have failed")
             logging.error(traceback.format_exc())
             self.record_error(response.request.url)
 
@@ -203,6 +206,7 @@ class HoudsingSpider(RedisSpider):
                 yield Request(room_model_url,callback=self.save_room_model,method='GET',meta={'department_code':department_code})
                 # time.sleep(4.45)
         except Exception as ex:
+            logging.error(f"{response.request.url} parse_department_more have failed")
             logging.error(traceback.format_exc())
             self.record_error(response.request.url)
 
@@ -212,7 +216,7 @@ class HoudsingSpider(RedisSpider):
                 department_code = response.meta['department_code']
             else:
                 url_housing = response.request.url
-                department_code = re.match('https://(\w+).fang.com/house/ajaxrequest/householdlist_get.php\?newcode=(\d+)&\S+',url_housing).group(2)
+                department_code = re.match('https://(\S+).fang.com/house/ajaxrequest/householdlist_get.php\?newcode=(\d+)&\S+',url_housing).group(2)
             room_model_data = response.json()
             for data_row in room_model_data:
                 housing_item = HousingItem()
@@ -242,6 +246,7 @@ class HoudsingSpider(RedisSpider):
                 housing_item['department_code'] = department_code
                 yield housing_item
         except Exception as ex:
+            logging.error(f"{response.request.url} save_model have failed")
             logging.error(traceback.format_exc())
             self.record_error(response.request.url)
 
@@ -304,6 +309,7 @@ class HoudsingSpider(RedisSpider):
     def record_error(self,error_url):
         # 解析返回失败，将记录记入重新爬取列表
         self.url_recorder.write(f'=====crawl url:{error_url} failed=====\n')
+        self.url_recorder.flush()
 
     def close(self, spider, reason):
         # 关闭文件（redis连接要关吗）

@@ -96,25 +96,15 @@ class HousingDownloaderMiddleware:
         # 配置仅仅支持RedisSpider
         # if not 'redis_key' in crawler.spidercls.__dict__.keys():
         #     raise NotConfigured('Only supports RedisSpider')
-
         # get the number of items from settings
-
         idle_number = crawler.settings.getint('IDLE_NUMBER', 100)
-
         # instantiate the extension object
-
         ext = cls(idle_number, crawler)
-
         # connect the extension object to signals
-
         crawler.signals.connect(ext.spider_opened, signal=signals.spider_opened)
-
         crawler.signals.connect(ext.spider_closed, signal=signals.spider_closed)
-
         crawler.signals.connect(ext.spider_idle, signal=signals.spider_idle)
-
         # return the extension object
-
         return ext
 
     def process_request(self, request, spider):
@@ -129,12 +119,11 @@ class HousingDownloaderMiddleware:
             header_tmp = {'user_agent':fake_ua}
             # proxy = self.proxy_util.output_proxy(url,header_tmp)
             proxy = self.proxy_util.output_proxy_from_zm(url,header_tmp)
-            print(f"the proxy will be {proxy},kind of proxy is {proxy_kind}")
+            # print(f"the proxy will be {proxy},kind of proxy is {proxy_kind}")
         except Exception as ex:
             spider.logger.error(traceback.format_exc())
             time.sleep(5)
-            self.request_writer.write(f'=====crawl url:{url} begin=====\n')
-            self.request_writer.flush()
+            proxy = None
         # if proxy_kind == 'https':
         #     proxy_str = f"https://{proxy}"
         # elif proxy_kind == 'http':
