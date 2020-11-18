@@ -4,6 +4,7 @@ from scrapy.utils.request import request_fingerprint
 from redis import Redis
 from ..items import HousingItem
 from ..items import DepartmentItem
+from my_exception import lossInfoException
 from pyquery import PyQuery as pq
 import re
 import time
@@ -35,10 +36,10 @@ class HoudsingSpider(RedisSpider):
             self.redis.sadd('fang_spider:start_urls', rest_url)
             callback_func = rest_url_dict[rest_url]
             yield Request(rest_url, callback=callback_func, method='GET')
-        city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
+        # city_list = ['wuhan', 'gz', 'cs', 'xz', 'nb']
         # city_list = ['xlglm','leiyang']
         # city_list = ['qiannan','chenzhou']
-        # city_list = ['zunyi']     # 调试用
+        city_list = []     # 调试用
         # city_list = ['jiamusi','danzhou']
         index_url_list = []
         for city in city_list:
@@ -158,19 +159,12 @@ class HoudsingSpider(RedisSpider):
                 city = response.meta['city']
                 district = response.meta['district']
             else:
-                if department_code == '2811174548':     # 特例3个
-                    city = '广州'
-                    district = '花都'
-                elif department_code == '2811174216':
-                    city = '广州'
-                    district = '增城'
-                elif department_code == '2611070026':
-                    city = '武汉'
-                    district = '武昌区'
-                else:
-                    navigates = page_pq('.topcrumbs a')
+                navigates = page_pq('.topcrumbs a')
+                if navigates:
                     city = re.search('(.*)新房',navigates[1].text).group(1)
                     district = re.search('(.*)楼盘',navigates[2].text).group(1)
+                else:
+                    raise lossInfoException('无法在此调用中获取城市和地区信息，返回上层爬取')
             department_item = DepartmentItem()
             department_item['obj'] = 'department'
             department_item['department_name'] = page_pq('h1 a').text().strip()
@@ -217,6 +211,18 @@ class HoudsingSpider(RedisSpider):
                 # room_model_url = 'https:' + room_model_link
                 yield Request(room_model_url,callback=self.save_room_model,method='GET',meta={'department_code':department_code})
                 # time.sleep(4.45)
+        except lossInfoException as exce:
+            print(exce)
+            pattern_suffix = 'house/(\d+)/housedetail.htm'
+            url_cur = response.request.url
+            url_last = re.sub(pattern_suffix,'',url_cur)
+            fp_last = request_fingerprint(Request(url_last, callback=self.parse_department_detail, method='GET'),include_headers=None)
+            fp_cur = request_fingerprint(Request(url_cur, callback=self.parse_department_more, method='GET'),include_headers=None)
+            self.redis.srem(HoudsingSpider.name + ':dupefilter', fp_last)
+            self.redis.srem(HoudsingSpider.name + ':dupefilter', fp_cur)     # 上一级的指纹和这一级的指纹都要删除
+            # yield Request(url_last, callback=self.parse_department_detail, method='GET')     # 为什么不直接起作用？
+            self.url_recorder.write(f'=====crawl url:{url_last} begin=====\n')
+            self.url_recorder.flush()
         except Exception as ex:
             logging.error(f"{response.request.url} parse_department_more have failed")
             logging.error(traceback.format_exc())
@@ -276,18 +282,15 @@ class HoudsingSpider(RedisSpider):
                     url_dict[url] = status
                 elif status == 'done':
                     try:
-                        if url_dict[url] == 'failed':     # 此类需要人工检查
-                            continue
-                        else:
-                            url_dict.pop(url)
+                        url_dict.pop(url)
                     except Exception as ex:
                         print(f'{url} have requested already')
             url_info = self.url_recorder.readline()
         print(f"{len(url_dict.keys())} urls have been interrupt last time,crawl them again")
         pattern_city = 'https://(\S+).newhouse.fang.com/house/s/$'
         pattern_district = 'https://(\S+).newhouse.fang.com/house/s/(\w+)/(b\d+)*'
-        pattern_page = 'https://(\S+).fang.com/(\w+)*'
-        pattern_detail = 'https://(\S+).fang.com/(office/)*house/(\d+)/housedetail.htm'
+        pattern_page = 'https://(\S+).fang.com/(\w+/)*$'
+        pattern_detail = 'https://(\S+).fang.com/(office/)*house/(\d+)/housedetail.htm$'
         pattern_housing = 'https://(\S+).fang.com/house/ajaxrequest/householdlist_get.php\?newcode=(\d+)&\S+'
         rest_url_dict = {}
         for url in url_dict.keys():
